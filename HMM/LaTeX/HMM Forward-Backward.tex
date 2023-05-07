@@ -1,0 +1,232 @@
+\section{Задача I (оцінювання)}
+
+Почергово розглянемо три основнi задачi, якi можна розв’язати за допомогою прихованих марковських моделей. У першому розділі оглянемо задачу оцінювання: за відомою прихованою марковською моделлю $\lambda=(\mu,A,B)$ й наданою протягом часу $t=\overline{0,T}$ послiдовнiстю спостережень $y=(y_0, \ldots , y_T)_{y_t\in F}$ прагнемо визначити імовiрнiсть $P_\lambda(Y = y)$, де $Y=(Y_0, \ldots , Y_T)$. 
+
+Перетин з повною групою подій, де вектор $X=(X_0, \ldots , X_T)$ пробігає всеможливі значення $x=(x_0, \ldots , x_T)_{x_t\in E}$, дає змогу безпосередньо обчислити шукану ймовірність:
+\begin{equation*}
+    P_\lambda(Y = y)=P_\lambda(Y = y\, \bigcap\, \Omega)=P_\lambda(Y = y\, \bigcap\, \Bigl[\bigsqcup\limits_{x}(X=x)\Bigr]),
+\end{equation*}
+
+а отже
+\begin{equation*}
+    P_\lambda(Y = y)=\sum\limits_{x}P_\lambda(Y = y, X=x)
+\end{equation*} 
+
+З огляду на властивості лінцюга Маркова, вказаний скінченновимірний розподіл виражатиметься через параметри заданої моделі $\lambda$ таким чином:
+\begin{equation*}
+    P_\lambda(Y = y)=\sum\limits_{x}\mu_{x_0}\prod\limits_{t=0}^{T-1}A_{x_t x_{t+1}}\prod\limits_{t=0}^{T}B_{x_t y_t} 
+\end{equation*}
+
+Проте, за допомогою алгоритмів прямого та зворотного ходу шукану ймовірність можна обчислити іншим, більш ефективним способом. 
+
+\subsection{Алгоритм прямого ходу}
+
+Алгоритм прямого ходу полягає у рекурсивному обчисленні сумісних імовірностей часткової послідовності спостережень до моменту часу $t$, перебуваючи в стані $x_t$ в момент часу $t:$
+\begin{equation}
+    \alpha_t(x_t)=P_\lambda(Y_0=y_0,\ldots,Y_t=y_t,X_t=x_t) \label{formula: alpha}
+\end{equation}
+
+Відтак крок за кроком, поклавши $\forall x_0 \in E: \alpha_0(x_0)=\mu_{x_0}B_{x_0 y_0}$, знайдемо значення усіх наступних коефіцієнтів за допомогою такого рекурентного співвідношення:
+\begin{equation*}
+    \alpha_{t+1}(x_{t+1})=\sum\limits_{x_t\in E}\alpha_t(x_t)\, A_{x_t x_{t+1}}B_{x_{t+1}y_{t+1}} 
+\end{equation*}
+
+Тоді загальна ймовірність записуватиметься так:
+\begin{equation*}
+    P_\lambda(Y = y)=\sum\limits_{x_T \in E}P_\lambda(Y_0=y_0,\ldots,Y_T=y_T,X_T=x_T)=\sum\limits_{x_T \in E}\alpha_T(x_T)
+\end{equation*}
+
+\subsection{Алгоритм зворотного ходу}
+
+В алгоритмі зворотного ходу ймовірність $P_\lambda(Y = y)$ шукатиметься через рекурсивне обчислення умовних імовiрностей послiдовностi спостережень вiд моменту часу $t + 1$ до $T$ при умовi, що прихованим є стан $x_t$ в момент часу $t:$
+\begin{equation}
+    \beta_t(x_t)=P_\lambda(Y_{t+1}=y_{t+1},\ldots,Y_T=y_T \, | \, X_t=x_t) \label{formula: beta}
+\end{equation}
+
+Поклавши $\forall x_T \in E: \beta_T(x_T)=1$, віднайдемо значення усіх попередніх коефіцієнтів за допомогою такого рекурентного співвідношення:
+\begin{equation*}
+    \beta_t(x_t)=\sum\limits_{x_{t+1}\in E}\beta_{t+1}(x_{t+1})\, A_{x_t x_{t+1}}B_{x_{t+1}y_{t+1}} 
+\end{equation*}
+
+Відтак загальна імовірність матиме такий вид:
+\begin{equation*}
+    P_\lambda(Y = y)=\sum\limits_{x_0 \in E}\beta_0(x_0)\, \mu_{x_0}B_{x_0 y_0}
+\end{equation*}
+
+\subsection{Приклад: кмітливі учні}
+
+Розглянемо приклад розв'язування задачі оцінювання за допомогою алгоритмів прямого та зворотного ходу:
+
+\vspace{0.2cm}
+\begin{mdframed}[style=text box, topline=false, bottomline=false, rightmargin=0cm, leftmargin=0cm]
+    \hspace{\tabsize}
+    Нехай шкільний вчитель математики протягом п'яти робочих днів задає учням домашнє завдання трьох рівнів складності: легке, складне та підвищеної складності. Водночас тип заданого завдання залежить від піднесеного, нейтрального чи поганого настрою вчителя. Як досвідчений професіонал, вчитель явно не демонструє свій настрій учням. 
+    
+    Припустимо, що учні бажають відвідати футбольний матч, який відбудеться наступного тижня у середу. Навантаження складним домашнім завданням у ці дні було б вкрай дошкульним. В той же час, повністю розвантажити тиждень від складних завдань не вийде -- викладач, скоріше за все, все ж подбає про баланс різних типів задач протягом тижня.
+    
+    Зібравши в уважних та кмітливих старшокласників інформацію про ймовірність зміни настрою вчителя, а також спостережуваний рівень складності заданого додому завдання в залежності від настрою викладача, учні починають дослідження: яка ймовірність спостереження наступного тижня послідовності заданих домашніх завдань бажаного рівня складності?
+\end{mdframed}
+
+Формалізуємо задачу учнів таким чином: пара $\left\{(X_t,Y_t)\right\}_{t=\overline{0,5}}$ -- прихована марковська модель, де $\left\{ X_t \right\}_{t=\overline{1,5}}$ є прихованою послідовністю настроїв вчителя, заданих на множині станів $E=\left\{\text{\faSmile[regular], \faMeh[regular], \faFrown[regular]}\right\}$, а $\left\{ Y_t \right\}_{t=\overline{1,5}}$ є спостережуваною послідовністю типів завдань, заданих на множині станів $F=\left\{ \text{\faMinus},\ \text{\faRandom},\ \text{\faSitemap} \right\}$. Cкладемо матриці $A$, $B$ та вектор $\mu$ згідно введених позначень:
+
+\vspace{0.4cm}
+\begin{table}[H]
+    \begin{minipage}[H]{0.35\linewidth}
+        \begin{center}
+            \begin{tabular}{c|ccc}
+                & \faSmile[regular] & \faMeh[regular] & \faFrown[regular] \\
+                \hline
+                \faSmile[regular] & 0.2 & 0.3 & 0.5 \\
+                \faMeh[regular] & 0.2 & 0.2 & 0.6 \\
+                \faFrown[regular] & 0 & 0.2 & 0.8 \\
+            \end{tabular}
+        \end{center} \centering матриця $A$
+    \end{minipage}
+    \hfill
+    \begin{minipage}[H]{0.35\linewidth}
+        \begin{center}
+            \begin{tabular}{c|ccc}
+                & \text{\faMinus} & \text{\faRandom} & \text{\faSitemap} \\
+                \hline
+                \faSmile[regular] & 0.7 & 0.2 & 0.1 \\
+                \faMeh[regular] & 0.3 & 0.4 & 0.3 \\
+                \faFrown[regular] & 0 & 0.1 & 0.9 \\
+            \end{tabular}
+        \end{center} \centering матриця $B$
+    \end{minipage}
+    \hfill
+    \begin{minipage}[H]{0.2\linewidth}
+        \begin{center}
+            \begin{tabular}{c|c}
+                \faSmile[regular] & 0.05 \\
+                \hline
+                \faMeh[regular] & 0.2 \\
+                \hline
+                \faFrown[regular] & 0.75 \\
+            \end{tabular}
+        \end{center} \centering вектор $\mu$
+    \end{minipage}
+\end{table}
+
+\vspace{0.4cm}
+Сформулюємо задачу оцінювання: за заданою моделлю $\lambda=(\mu, A, B)$ визначити ймовірність спостереження такої послідовності:
+\begin{equation*}
+    P_\lambda(Y_1=\text{\faSitemap},Y_2=\text{\faMinus},Y_3=\text{\faMinus},Y_4=\text{\faRandom},Y_5=\text{\faRandom})
+\end{equation*}
+
+Програматично реалізацію алгоритмів прямого та зворотного ходу наведено у Лістингах нижче (спостережені типи завдань перекодовано номерами від $1$ до $3$):
+
+\begin{lstlisting}[firstnumber=1, label = code: alpha, caption = Алгоритм прямого ходу]
+    def alpha_calculation(y,m,A,B):
+        time = len(y)
+        alpha = [[0.0 for i in range(len(B))] for t in range(time)]
+
+        for t in range(time):
+            for i in range(len(B)):
+                if t == 0: 
+                    alpha[t][i] = m[i]*B[i][y[t]-1]
+                else:
+                    aA = 0
+                    for j in range(len(B)):
+                        aA += alpha[t-1][j]*A[j][i]
+                    alpha[t][i] = aA*B[i][y[t]-1]
+
+        P_alpha = 0
+        for i in range(len(alpha[time-1])):
+            P_alpha += alpha[time-1][i]
+
+        return alpha, P_alpha
+\end{lstlisting}
+
+\vspace{0.4cm}
+В результаті роботи алгоритму прямого ходу отримано таке значення шуканої імовірності:
+\begin{equation*}
+    P_\lambda(Y_1=\text{\faSitemap},Y_2=\text{\faMinus},Y_3=\text{\faMinus},Y_4=\text{\faRandom},Y_5=\text{\faRandom}) = 0.0003985588
+\end{equation*}
+
+\begin{lstlisting}[firstnumber=1, label = code: beta, caption = Алгоритм зворотного ходу]
+    def beta_calculation(y,m,A,B):
+        time = len(y)
+        beta = [[0.0 for i in range(len(B))] for t in range(time)]
+
+        for t in range(time-1, -1, -1):
+            for i in range(len(B)):
+                if t == time-1: 
+                    beta[t][i] = 1
+                else:
+                    sum = 0
+                    for j in range(len(B)):
+                        sum += beta[t+1][j]*A[i][j]*B[j][y[t+1]-1]
+                    beta[t][i] = sum
+
+        P_beta = 0
+        for i in range(len(beta[0])):
+            P_beta += beta[0][i]*B[i][y[0]-1]*m[i]
+
+        return beta, P_beta
+\end{lstlisting}
+
+\vspace{0.4cm}
+Імовірність спостереження заданої послідовності за алгоритмом зворотного ходу дорівнює:
+\begin{equation*}
+    P_\lambda(Y_1=\text{\faSitemap},Y_2=\text{\faMinus},Y_3=\text{\faMinus},Y_4=\text{\faRandom},Y_5=\text{\faRandom}) = 0.0003985588
+\end{equation*}
+
+Як бачимо, імовірності за методом прямого та зворотного ходу тотожні. Наведемо проміжні значення коефіцієнтів $\alpha_t(x_t)$ та $\beta_t(x_t):$ 
+
+\vspace{0.4cm}
+\begin{table}[H]
+    \label{table: forward/backward algorithms}
+    \begin{minipage}[H]{0.48\linewidth}
+        \begin{center}
+            \begin{tabular}{c|c|c|c}
+                $\alpha_t(x_t)$ & \faSmile[regular] & \faMeh[regular] & \faFrown[regular] \\
+                \hline
+                t=1 & 0.005 & 0.06 & 0.675 \\
+                \hline
+                t=2 & 0.0091 & 0.0446 & 0 \\ 
+                \hline
+                t=3 & 0.0075 & 0.0035 & 0 \\ 
+                \hline
+                t=4 & 0.0004 & 0.0012 & 0.0006 \\ 
+                \hline
+                t=5 & 0.0001 & 0.0002 & 0.0001 \\
+            \end{tabular}
+        \end{center} \centering результати алгоритму прямого ходу
+    \end{minipage}
+    \hfill
+    \begin{minipage}[H]{0.48\linewidth}
+        \begin{center}
+            \begin{tabular}{c|c|c|c}
+                $\beta_t(x_t)$ & \faSmile[regular] & \faMeh[regular] & \faFrown[regular] \\
+                \hline
+                t=1 & 0.0018 & 0.0016 & 0.0004 \\
+                \hline
+                t=2 & 0.0082 & 0.0073 & 0.0019 \\ 
+                \hline
+                t=3 & 0.038 & 0.0324 & 0.0272 \\ 
+                \hline
+                t=4 & 0.21 & 0.18 & 0.16 \\ 
+                \hline
+                t=5 & 1 & 1 & 1 \\
+            \end{tabular}
+        \end{center} \centering результати алгоритму зворотного ходу
+    \end{minipage}
+\end{table}
+
+\vspace{0.4cm}
+Аналізуючи отримані результати, спершу зауважимо, що сума ймовірностей спостереження усеможливих комбінацій послідовностей заданих протягом тижня типів задач виходить рівною одиниці:
+\begin{equation*}
+    \sum\limits_{y_1,y_2,y_3,y_4,y_5\in F}P_\lambda(Y_1=y_1 ,Y_2=y_2,Y_3=y_3,Y_4=y_4,Y_5=y_5) = 1
+\end{equation*}
+
+Тому авжеж, учнів засмутить мализна отриманої протягом їхнього дослідження імовірності. Проте при спробі підрахувати сумарну ймовірність спостереження легких задач у вівторок та середу при довільних типах задач в інші дні, результат виявиться значно кращим, але все ще не надто обнадійливим:
+\begin{equation*}
+    \sum\limits_{y_1,y_4,y_5\in F}P_\lambda(Y_1=y_1 ,Y_2=\text{\faMinus},Y_3=\text{\faMinus},Y_4=y_4,Y_5=y_5) = 0.02035
+\end{equation*}
+
+\label{P=0.25559}
+Наостанок, надзвичайно невтішним для школярів виявиться той факт, що серед імовірностей спостереження усеможливих послідовностей заданих домашніх завдань, найбільшою виявиться імовірність саме такого ланцюжка:
+\begin{equation*}
+    P_\lambda(Y_1=\text{\faSitemap},Y_2=\text{\faSitemap},Y_3=\text{\faSitemap},Y_4=\text{\faSitemap},Y_5=\text{\faSitemap}) = 0.25559
+\end{equation*}

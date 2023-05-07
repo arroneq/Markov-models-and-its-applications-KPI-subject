@@ -1,0 +1,150 @@
+\documentclass[a4paper,14pt]{extarticle} % the default "article" class is limited to 12pt, but you can go up to 14, 17 or 20 points if you use the "extarticle" class
+\usepackage{cmap} % make LaTeX PDF output copy-and-pasteable
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,ukrainian]{babel}
+
+\usepackage{amssymb, amsfonts, mathtools, amsmath, enumerate}
+\usepackage{indentfirst} % set an additional space before a paragraph at the begining of a new section
+\usepackage{setspace}
+\usepackage{textcomp}
+
+\usepackage{dsfont} % indicator symbol
+\usepackage{leftidx} % this package enables left subscripts and superscripts in math mode
+
+\usepackage{import} % for adding a file by path https://tex.stackexchange.com/questions/246/when-should-i-use-input-vs-include
+
+\usepackage{geometry} 
+\geometry{left=1.25cm}
+\geometry{right=1.25cm}
+\geometry{top=1cm}
+\geometry{bottom=2cm}
+
+\setlength{\arrayrulewidth}{0.3mm} % this sets the thickness of the borders of the table
+\setlength{\tabcolsep}{12pt} % the space between the text and the left/right border of its containing cell is set to 12pt with this command
+\renewcommand{\arraystretch}{1.5} % the height of each row is set to 1.5 relative to its default height
+
+\usepackage{siunitx}
+\sisetup{
+  round-mode       = places, % rounds numbers
+  round-precision  = 6, % to 2 places
+}
+
+\usepackage[table,xcdraw,dvipsnames]{xcolor}
+\usepackage{multirow}
+\usepackage{color}
+% 1) tutorial about xcolor:  https://www.overleaf.com/learn/latex/Using_colours_in_LaTeX
+% 2) huge tutorial about xcolor: https://latex-tutorial.com/color-latex/ 
+% 3) RGB calculator: https://www.w3schools.com/colors/colors_rgb.asp
+
+\usepackage{hyperref}
+\definecolor{linkcolor}{HTML}{0000FF}
+\definecolor{urlcolor}{HTML}{0000FF} 
+\hypersetup{pdfstartview=FitH, unicode=true, linkcolor=linkcolor, urlcolor=urlcolor, colorlinks=true}
+
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{float}
+
+\graphicspath{{/home/anton/Code/KPI 4/Markov/HMM/LaTeX/Images/}} % path to images
+
+\usepackage{subfloat}
+
+\parskip=1mm % space between paragraphs
+
+\usepackage{mdframed}
+
+\global\mdfdefinestyle{text box}{
+    linecolor=black,
+    linewidth=3pt,
+    leftmargin=0cm,
+    rightmargin=0cm
+}
+
+% enumerating equations according to the section number 
+% plus resetting each numeration inside each section
+% \numberwithin{equation}{section}
+
+% numbering only sections in the table of contents (the "1" nesting level)
+% thus numbering equations only according to the section number
+\setcounter{secnumdepth}{0}
+
+\usepackage{fontawesome5}
+
+\usepackage{listingsutf8} % origin: \usepackage{listings}
+
+\newlength{\tabsize}
+\settowidth{\tabsize}{\indent}
+
+\lstset{
+    frame=single,
+    language=Python,
+    aboveskip=3mm,
+    belowskip=3mm,
+    columns=flexible,
+    basicstyle=\small\ttfamily,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    commentstyle=\color{OliveGreen},
+    stringstyle=\color{Mahogany},
+    morestring=[b]''',
+    showstringspaces=false,
+    keywordstyle=\bfseries\color{blue},
+    emph={[1]import, as, for, while, return}, emphstyle={[1]\bfseries\color{Mulberry}},
+    emph={[2]range}, emphstyle={[2]\bfseries\color{brown}},
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    extendedchars=false, % to use ukrainian text in a code
+    inputencoding=utf8 % to use ukrainian text in a code
+}
+
+\begin{document}
+
+\import{Title/}{title}
+
+\tableofcontents
+
+\newpage
+
+\section{Опис прихованих марковських моделей}
+
+Перш ніж переходити до розв'язків задач оцінювання, навчання та декодування, введемо декілька необхідних означень. Нехай $\left\{ X_t \right\}_{t\geqslant 0}$ -- ланцюг Маркова, тобто послідовність випадкових величин, які приймають значення $\left\{ x_t \right\}_{t\geqslant 0}$ зі скінченної множини станів $E=\{e_1,e_2,\ldots,e_N\}$. Крім того, для вказаної послідовності справедливі властивості:
+\begin{enumerate} [(1)]
+    \item Заданий початковий розподіл $:\mu_{x_0}=P(X_0=x_0) \ \ \forall x_0 \in E$\,;
+    \item Виконується властивість незалежності <<майбутнього>> від <<минулого>> при відомому <<теперішньому>>: 
+    
+    $\forall n\geqslant 0 \quad \forall x_0,x_1,\ldots,x_{n+1} \in E:$
+	\[ P(X_{n+1}=x_{n+1} \, |\, X_n=x_n,\,\ldots\,,\, X_0=x_0)=P(X_{n+1}=x_{n+1} \, |\, X_n=x_n) \]
+\end{enumerate}
+
+Компоненти з властивості (1), які формують вектор $\mu$, називають початковим розподілом, а сукупність імовірностей виду $P(X_{n+1}=x_{n+1} \, |\, X_n=x_n)$ для будь-якого $n$ та довільних станів $x_n,x_{n+1} \in E$ -- матрицею перехідних імовірностей $A$.
+
+Зауважимо, що надалі розглядатимуться лише однорідні ланцюги Маркова, у яких перехідні ймовірності матриці $A$ є однаковими незалежно від номера <<кроку>> самого ланцюга. Наприклад, $\forall n\geqslant 0$ та при фіксованих станах $x_0,x_1 \in E:$ 
+\begin{equation*}
+    P(X_1=x_1 \, |\, X_0=x_0)=P(X_{101}=x_1 \, |\, X_{100}=x_0)=\ldots=P(X_{n+1}=x_1 \, |\, X_n=x_0)
+\end{equation*}
+
+Тепер введемо послідовність випадкових величин $\left\{ Y_t \right\}_{t\geqslant 0}$ зі значеннями $\left\{ y_t \right\}_{t\geqslant 0}$ на скінченній множині станів $F=\{f_1,f_2,\ldots,f_M\}$. Тоді пара $\left\{(X_t,Y_t)\right\}_{t\geqslant 0}$, задана на декартовому добутку $E\times F$, є прихованою марковською моделлю за виконання таких умов:
+\begin{enumerate} [(1)]
+    \item $\left\{ X_t \right\}_{t\geqslant 0}$ -- ланцюг Маркова;
+    \item Bипадкові величини $Y_0,Y_1,\ldots,Y_n$ є умовно незалежними при заданому наборі величин $X_0,X_1,\ldots,X_n:$
+    
+    $\forall n\geqslant 1 \quad \forall y_0,y_1,\ldots,y_n \in F \quad \forall x_0,x_1,\ldots,x_n \in E:$
+    \[ P(Y_0=y_0,\ldots,Y_n=y_n \, |\, X_0=x_0,\ldots,X_n=x_n)= \]
+    \[ =\prod\limits_{t=0}^{n}P(Y_t=y_t \, |\, X_0=x_0,\ldots,X_n=x_n) \]
+    \item Умовний розподіл випадкової величини $Y_t$ при заданих $X_0,X_1,\ldots,X_n$ залежить лише від  $X_t:$
+    
+    $\forall n\geqslant 1 \quad \forall t=\overline{0,n} \quad \forall y_t \in F \quad \forall x_0,x_1,\ldots,x_n \in E:$
+	\[ P(Y_t=y_t \, |\, X_0=x_0,\ldots,X_n=x_n)=P(Y_t=y_t \, |\, X_t=x_t) \]
+\end{enumerate}
+
+У парі $\left\{(X_t,Y_t)\right\}_{t\geqslant 0}$ послідовність $\left\{ X_t \right\}_{t\geqslant 0}$ називають <<прихованою>>, а послідовність $\left\{ Y_t \right\}_{t\geqslant 0}$ -- <<спостережуваною>>. Приховану марковську модель $\lambda$ з початковим розподілом $\mu$, матрицею перехід\-них імовірностей $A$ та матрицею умовних імовірностей переходу від <<прихованих>> станів до <<спостережуваних>> величин $B$ позначатимемо так: $\lambda=(\mu,A,B)$.
+
+\import{/home/anton/Code/KPI 4/Markov/HMM/LaTeX/}{HMM Forward-Backward.tex}
+
+\import{/home/anton/Code/KPI 4/Markov/HMM/LaTeX/}{HMM Baum-Welch.tex}
+
+\import{/home/anton/Code/KPI 4/Markov/HMM/LaTeX/}{HMM Viterbi.tex}
+
+\end{document}
